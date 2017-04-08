@@ -1,6 +1,11 @@
 import RPi.GPIO as GPIO
+import serial
 from flask import Flask, render_template, request
 app = Flask(__name__)
+
+# Adding arduino communications with bluetooth 
+bluetoothSerial = serial.Serial( "/dev/rfcomm1", baudrate=9600 )
+
 
 GPIO.setmode(GPIO.BOARD)
 
