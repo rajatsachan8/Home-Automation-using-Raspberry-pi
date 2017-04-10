@@ -31,7 +31,7 @@ def action(value,action):
            bluetoothSerial.write(1)
         
        if changePin == 2:
-           bluetoothSerial.write(2)
+           bluetoothSerial.write(3)
 
        message = 'Turned' + deviceName + 'ON'
            
@@ -43,7 +43,7 @@ def action(value,action):
        if changePin == 1:
            bluetoothSerial.write(0)
        if changePin == 2:
-           bluetoothSerial.write(3)
+           bluetoothSerial.write(2)
        message = 'Turned' + deviceName + 'OFF'
        pins[changePin]['state'] = False   
 
