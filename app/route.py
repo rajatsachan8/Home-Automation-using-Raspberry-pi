@@ -1,10 +1,16 @@
 from flask import Flask,render_template,request
-import serial
+from lib_nrf24 import NRF24
+import time
+import RPi.GPIO as GPIO
+import spidev
 
 app = Flask(__name__)
 
-bluetoothSerial = serial.Serial("/dev/rfcomm1", baudrate=9600)
+GPIO.setmode(GPIO.BCM)
 
+pipes = [[0xE8 , 0xE8 , 0xF0 , 0xF0 , 0xE1] , [0xF0 ,0xF0, 0xF0, 0xF0, 0xE1]]
+radio  = NRF24(GPIO,spidev.SpiDev())
+    
 pins = {
         1 : {'name' : 'Light' , 'state' : False },
         2 : {'name' : 'Fan'   , 'state' : False }
@@ -12,7 +18,18 @@ pins = {
 
 @app.route('/')
 def index():
-    templatedata = {
+   
+    radio.begin(0,17)
+    radio.setPayloadSize(32)
+    radio.setChannel(0x76)
+    radio.setDataRate(NRF24.BR_1MBPS)
+    radio.setPALevel(NRF24.PA_MIN)
+    radio.setAutoAck(True)
+    radio.enableDynamicPayloads()
+    radio.enableAckPayload()
+    radio.openWritingPipe(pipes[0])
+
+    templateData = {
                    'pins' : pins
                   }
    
@@ -28,12 +45,18 @@ def action(value,action):
    # If the action part of the URL is "on," execute the code indented below:
    if action == "on":
        if changePin == 1:
-           bluetoothSerial.write(1)
-        
+           message = "1"
+           radio.write(message)
+           print("Sent message: {}".format(message))
+                                 
        if changePin == 2:
-           bluetoothSerial.write(3)
+           message = "2"
+           radio.write(message)
+           print("Sent message: {}".format(message))
+           
+           
 
-       message = 'Turned' + deviceName + 'ON'
+       #message = 'Turned' + deviceName + 'ON'
            
        pins[changePin]['state'] = True
        
@@ -41,10 +64,19 @@ def action(value,action):
       
    if action == "off":
        if changePin == 1:
-           bluetoothSerial.write(0)
+           message = "0"
+           radio.write(message)
+           print("Sent message: {}".format(message))
+           
+          
+                
        if changePin == 2:
-           bluetoothSerial.write(2)
-       message = 'Turned' + deviceName + 'OFF'
+           message = "3"
+           radio.write(message)
+           print("Sent message: {}".format(message))
+           
+               
+      # message = 'Turned' + deviceName + 'OFF'
        pins[changePin]['state'] = False   
 
    # Along with the pin dictionary, put the message into the template data dictionary:
@@ -55,4 +87,4 @@ def action(value,action):
    return render_template('main.html', **templateData)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0',port=3134)
